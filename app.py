@@ -2,58 +2,51 @@ import streamlit as st
 from transformers import pipeline
 
 # Page configuration
-st.set_page_config(
-    page_title="Sentiment Analysis App",
-    page_icon="😊",
-    layout="centered"
-)
+st.set_page_config(page_title="Sentiment Analyzer", page_icon="🎭")
 
-# Title and description
-st.markdown("<h1 style='text-align: center;'>🧠 Sentiment Analysis App</h1>", unsafe_allow_html=True)
-st.markdown("<p style='text-align: center;'>Analyze emotions in text using 🤗 Transformers</p>", unsafe_allow_html=True)
-
-st.divider()
-
-# Load model (cached for performance)
+# Load the model with caching to prevent reloading on every click
 @st.cache_resource
 def load_model():
     return pipeline("sentiment-analysis")
 
-model = load_model()
+analyzer = load_model()
 
-# Text input
-text = st.text_area(
-    "✍️ Enter your text below:",
-    placeholder="Example: I don't like this product 😞",
-    height=120
-)
+# --- UI Layout ---
+st.title("🎭 AI Sentiment Analyzer")
+st.markdown("""
+    Welcome! This app uses a **Hugging Face** transformer model to detect if your text is 
+    **Positive** or **Negative**. 
+""")
 
-# Button
-if st.button("🔍 Analyze Sentiment"):
-    if text.strip() == "":
-        st.warning("⚠️ Please enter some text first!")
+st.divider()
+
+# Input section
+text_input = st.text_area("✍️ Enter your text below:", placeholder="e.g., I absolutely love this product!")
+
+if st.button("Analyze Sentiment"):
+    if text_input.strip() != "":
+        with st.spinner("Analyzing... 💫"):
+            # Model Inference
+            result = analyzer(text_input)[0]
+            label = result['label']
+            score = result['score']
+
+            # Display Results
+            st.subheader("Results:")
+            
+            # Formatting based on sentiment
+            if label == "POSITIVE":
+                st.success(f"**Sentiment:** {label} 😊")
+            else:
+                st.error(f"**Sentiment:** {label} ☹️")
+            
+            st.info(f"**Confidence Score:** {score:.2%}")
+            
+            # Progress bar for visual appeal
+            st.progress(score)
     else:
-        with st.spinner("Analyzing sentiment... 🤔"):
-            result = model(text)[0]
+        st.warning("Please enter some text first! ⚠️")
 
-        label = result["label"]
-        score = result["score"]
-
-        st.success("✅ Analysis Complete!")
-
-        # Display result nicely
-        if label == "POSITIVE":
-            st.markdown(f"### 😄 Sentiment: **{label}**")
-        else:
-            st.markdown(f"### 😡 Sentiment: **{label}**")
-
-        st.markdown(f"**Confidence Score:** `{score:.4f}`")
-
-        st.divider()
-        st.markdown("📌 *This model uses a pre-trained Hugging Face Transformer*")
-
-# Footer
-st.markdown(
-    "<hr><p style='text-align:center;'>Made with ❤️ using Streamlit & Transformers</p>",
-    unsafe_allow_html=True
-)
+# Sidebar info
+st.sidebar.title("About")
+st.sidebar.info("Built with Streamlit and Hugging Face Transformers. 🚀")
